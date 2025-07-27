@@ -1,32 +1,64 @@
 <!DOCTYPE html>
 <html lang="en">
 <head>
-  <meta charset="UTF-8">
-  <title>Join Paint Room</title>
-  <link rel="stylesheet" href="style.css">
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Paint-Web | Home</title>
+  <style>
+    body {
+      font-family: Arial, sans-serif;
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      justify-content: center;
+      height: 100vh;
+      margin: 0;
+      background: #f0f0f0;
+    }
+    button {
+      font-size: 20px;
+      padding: 10px 20px;
+      margin: 10px;
+      cursor: pointer;
+    }
+    input {
+      font-size: 18px;
+      padding: 8px;
+      width: 200px;
+    }
+  </style>
 </head>
 <body>
-  <div class="container">
-    <h1>PaintWeb🎨</h1>
-    <input id="room-code" placeholder="Enter Room Code" />
-    <div class="buttons">
-      <button onclick="joinRoom()">Join Room</button>
-      <button onclick="createRoom()">Create Room</button>
-    </div>
+  <h1>Welcome to Paint-Web</h1>
+  <button id="createRoomBtn">🎨 Create Room</button>
+  <div>
+    <input id="roomInput" placeholder="Enter Room Code" />
+    <button id="joinRoomBtn">🔗 Join Room</button>
   </div>
 
   <script>
-    function createRoom() {
-      const code = Math.random().toString(36).substring(2, 8);
-      window.location.href = `room.html?code=${code}`;
+    function generateRoomCode(length = 6) {
+      const chars = 'ABCDEFGHIJKLMNOPQRSTUVWXYZ0123456789';
+      let code = '';
+      for (let i = 0; i < length; i++) {
+        code += chars[Math.floor(Math.random() * chars.length)];
+      }
+      return code;
     }
 
-    function joinRoom() {
-      const code = document.getElementById("room-code").value.trim();
+    document.getElementById("createRoomBtn").onclick = () => {
+      const code = generateRoomCode();
+      window.location.href = `room.html?code=${code}`;
+    };
+
+    document.getElementById("joinRoomBtn").onclick = () => {
+      const code = document.getElementById("roomInput").value.trim().toUpperCase();
       if (code) {
         window.location.href = `room.html?code=${code}`;
+      } else {
+        alert("Please enter a room code.");
       }
-    }
+    };
   </script>
 </body>
 </html>
