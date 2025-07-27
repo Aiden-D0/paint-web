@@ -1,64 +1,76 @@
 <!DOCTYPE html>
 <html lang="en">
 <head>
-  <meta charset="UTF-8" />
-  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-  <title>Paint-Web | Home</title>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Paint-Web Main Menu</title>
   <style>
     body {
+      margin: 0;
+      padding: 0;
       font-family: Arial, sans-serif;
+      background: #f5f5f5;
       display: flex;
       flex-direction: column;
       align-items: center;
       justify-content: center;
       height: 100vh;
-      margin: 0;
-      background: #f0f0f0;
+    }
+    h1 {
+      font-size: 3em;
+      margin-bottom: 0.5em;
+    }
+    .menu {
+      display: flex;
+      flex-direction: column;
+      gap: 1em;
+      width: 300px;
+    }
+    input, button {
+      padding: 10px;
+      font-size: 1em;
+      border: 1px solid #ccc;
+      border-radius: 5px;
     }
     button {
-      font-size: 20px;
-      padding: 10px 20px;
-      margin: 10px;
+      background: #007bff;
+      color: white;
       cursor: pointer;
     }
-    input {
-      font-size: 18px;
-      padding: 8px;
-      width: 200px;
+    .version {
+      position: absolute;
+      bottom: 10px;
+      right: 10px;
+      color: #666;
+      font-size: 0.9em;
     }
   </style>
 </head>
 <body>
-  <h1>Welcome to Paint-Web</h1>
-  <button id="createRoomBtn">🎨 Create Room</button>
-  <div>
-    <input id="roomInput" placeholder="Enter Room Code" />
-    <button id="joinRoomBtn">🔗 Join Room</button>
+  <h1>Paint-Web</h1>
+  <div class="menu">
+    <input type="text" id="username" placeholder="Enter your username">
+    <button onclick="createRoom()">Create Room</button>
+    <input type="text" id="roomCode" placeholder="Enter Room Code">
+    <button onclick="joinRoom()">Join Room</button>
   </div>
 
+  <div class="version">Version 1.0</div>
+
   <script>
-    function generateRoomCode(length = 6) {
-      const chars = 'ABCDEFGHIJKLMNOPQRSTUVWXYZ0123456789';
-      let code = '';
-      for (let i = 0; i < length; i++) {
-        code += chars[Math.floor(Math.random() * chars.length)];
-      }
-      return code;
+    function createRoom() {
+      const username = document.getElementById("username").value.trim();
+      if (!username) return alert("Please enter a username");
+      const code = Math.random().toString(36).substr(2, 5).toUpperCase();
+      window.location.href = `/room.html?code=${code}&user=${encodeURIComponent(username)}`;
     }
 
-    document.getElementById("createRoomBtn").onclick = () => {
-      const code = generateRoomCode();
-      window.location.href = `room.html?code=${code}`;
-    };
-
-    document.getElementById("joinRoomBtn").onclick = () => {
-      const code = document.getElementById("roomInput").value.trim().toUpperCase();
-      if (code) {
-        window.location.href = `room.html?code=${code}`;
-      } else {
-        alert("Please enter a room code.");
-      }
-    };
+    function joinRoom() {
+      const username = document.getElementById("username").value.trim();
+      const code = document.getElementById("roomCode").value.trim().toUpperCase();
+      if (!username || !code) return alert("Please enter both username and room code");
+      window.location.href = `/room.html?code=${code}&user=${encodeURIComponent(username)}`;
+    }
   </script>
 </body>
 </html>
