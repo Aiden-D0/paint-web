@@ -2,21 +2,77 @@
 <html lang="en">
 <head>
   <meta charset="UTF-8">
-  <title>Room</title>
-  <link rel="stylesheet" href="style.css">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Paint Room</title>
+  <style>
+    html, body {
+      margin: 0;
+      padding: 0;
+      height: 100%;
+      overflow: hidden;
+    }
+    canvas {
+      position: absolute;
+      top: 0;
+      left: 0;
+      width: 100vw;
+      height: 100vh;
+      background: white;
+      cursor: crosshair;
+    }
+    #roomCodeDisplay {
+      position: fixed;
+      top: 10px;
+      left: 10px;
+      font-size: 18px;
+      background: #fff;
+      padding: 5px 10px;
+      border-radius: 6px;
+      box-shadow: 0 0 5px rgba(0,0,0,0.2);
+    }
+    #chatBox {
+      position: fixed;
+      bottom: 0;
+      left: 0;
+      width: 300px;
+      background: rgba(255, 255, 255, 0.9);
+      border-top-right-radius: 10px;
+      padding: 10px;
+      display: flex;
+      flex-direction: column;
+    }
+    #chatMessages {
+      flex: 1;
+      max-height: 200px;
+      overflow-y: auto;
+      font-size: 14px;
+      margin-bottom: 10px;
+    }
+    #chatInput {
+      display: flex;
+    }
+    #chatInput input {
+      flex: 1;
+      padding: 6px;
+      font-size: 14px;
+    }
+    #chatInput button {
+      padding: 6px 10px;
+    }
+  </style>
 </head>
 <body>
-  <div class="toolbar">
-    <span id="room-display"></span>
-    <input type="color" id="color-picker" value="#000000">
-    <input type="range" id="brush-size" min="1" max="20" value="3">
-    <button onclick="setTool('brush')">🖌️ Brush</button>
-    <button onclick="setTool('fill')">🪣 Fill</button>
-    <button onclick="clearCanvas()">🗑️ Clear</button>
-    <button onclick="exportImage()">💾 Save</button>
+  <div id="roomCodeDisplay"></div>
+  <canvas id="paintCanvas"></canvas>
+
+  <div id="chatBox">
+    <div id="chatMessages"></div>
+    <div id="chatInput">
+      <input id="chatText" placeholder="Type a message...">
+      <button onclick="sendMessage()">Send</button>
+    </div>
   </div>
 
-  <canvas id="paint-canvas"></canvas>
   <script src="/socket.io/socket.io.js"></script>
   <script src="script.js"></script>
 </body>
