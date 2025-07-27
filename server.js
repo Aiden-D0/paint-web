@@ -1,31 +1,54 @@
+// paint-web backend (Node.js with Express + Socket.io)
+
 const express = require("express");
 const http = require("http");
 const { Server } = require("socket.io");
+const path = require("path");
 
 const app = express();
 const server = http.createServer(app);
 const io = new Server(server);
 
-app.use(express.static("public"));
+const PORT = process.env.PORT || 3000;
 
-io.on("connection", socket => {
-  socket.on("joinRoom", room => {
-    socket.join(room);
-    socket.room = room;
+// Serve static frontend from 'public' folder
+app.use(express.static(path.join(__dirname, "public")));
+
+// Store drawing and chat history per room
+const roomData = {};
+
+io.on("connection", (socket) => {
+  console.log("A user connected");
+
+  socket.on("joinRoom", (roomCode) => {
+    socket.join(roomCode);
+    socket.roomCode = roomCode;
+    console.log(`User joined room: ${roomCode}`);
+
+    // Send past chat (optional)
+    if (roomData[roomCode]?.chat) {
+      roomData[roomCode].chat.forEach((msg) => {
+        socket.emit("chatMessage", msg);
+      });
+    }
   });
 
-  socket.on("draw", data => {
-    socket.to(socket.room).emit("draw", data);
+  socket.on("draw", (data) => {
+    if (!socket.roomCode) return;
+    socket.to(socket.roomCode).emit("draw", data);
   });
 
-  socket.on("fill", data => {
-    socket.to(socket.room).emit("fill", data);
+  socket.on("chatMessage", ({ room, message }) => {
+    if (!roomData[room]) roomData[room] = { chat: [] };
+    roomData[room].chat.push(message);
+    io.to(room).emit("chatMessage", message);
   });
 
-  socket.on("clear", () => {
-    socket.to(socket.room).emit("clear");
+  socket.on("disconnect", () => {
+    console.log("User disconnected");
   });
 });
 
-const PORT = process.env.PORT || 3000;
-server.listen(PORT, () => console.log(`Server running on http://localhost:${PORT}`));
+server.listen(PORT, () => {
+  console.log(`Server running on http://localhost:${PORT}`);
+});
