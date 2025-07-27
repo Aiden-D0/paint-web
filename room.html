@@ -1,69 +1,72 @@
 <!DOCTYPE html>
 <html lang="en">
 <head>
-  <meta charset="UTF-8">
-  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
   <title>Paint Room</title>
   <style>
-    html, body {
-      margin: 0;
-      padding: 0;
-      height: 100%;
-      overflow: hidden;
-    }
-    canvas {
-      display: block;
-      width: 100vw;
-      height: 100vh;
-      background-color: white;
-      cursor: crosshair;
-    }
+    * { margin: 0; padding: 0; box-sizing: border-box; }
+    body { overflow: hidden; font-family: sans-serif; }
+    #paintCanvas { position: absolute; top: 0; left: 0; z-index: 0; }
+
     #roomCodeDisplay {
       position: fixed;
       top: 10px;
       left: 10px;
-      font-size: 18px;
-      background: #fff;
-      padding: 5px 10px;
-      border-radius: 6px;
-      box-shadow: 0 0 5px rgba(0,0,0,0.2);
       z-index: 10;
+      background: rgba(255,255,255,0.8);
+      padding: 6px 12px;
+      border-radius: 6px;
+      font-weight: bold;
     }
+
     #chatBox {
       position: fixed;
-      bottom: 0;
-      left: 0;
+      right: 10px;
+      bottom: 10px;
       width: 300px;
-      background: rgba(255, 255, 255, 0.9);
-      border-top-right-radius: 10px;
-      padding: 10px;
+      z-index: 20;
+      background: white;
+      border: 1px solid #ccc;
+      border-radius: 8px;
       display: flex;
       flex-direction: column;
-      z-index: 10;
+      height: 250px;
     }
+
     #chatMessages {
       flex: 1;
-      max-height: 200px;
+      padding: 10px;
       overflow-y: auto;
-      font-size: 14px;
-      margin-bottom: 10px;
+      border-bottom: 1px solid #ccc;
     }
+
     #chatInput {
       display: flex;
     }
-    #chatInput input {
+
+    #chatText {
       flex: 1;
-      padding: 6px;
-      font-size: 14px;
+      padding: 8px;
+      border: none;
+      border-top-left-radius: 8px;
+      border-bottom-left-radius: 8px;
     }
+
     #chatInput button {
-      padding: 6px 10px;
+      padding: 8px 12px;
+      border: none;
+      background: #007bff;
+      color: white;
+      border-top-right-radius: 8px;
+      border-bottom-right-radius: 8px;
+      cursor: pointer;
     }
   </style>
 </head>
 <body>
-  <div id="roomCodeDisplay">Loading...</div>
   <canvas id="paintCanvas"></canvas>
+  <div id="roomCodeDisplay">Loading...</div>
 
   <div id="chatBox">
     <div id="chatMessages"></div>
@@ -75,75 +78,63 @@
 
   <script src="/socket.io/socket.io.js"></script>
   <script>
-    window.onload = () => {
-      const socket = io();
+    const socket = io();
+    const canvas = document.getElementById("paintCanvas");
+    const ctx = canvas.getContext("2d");
+    canvas.width = window.innerWidth;
+    canvas.height = window.innerHeight;
 
-      const canvas = document.getElementById("paintCanvas");
-      const ctx = canvas.getContext("2d");
-      let drawing = false;
+    let drawing = false;
+    let username = prompt("Enter your name:") || "Guest";
 
-      function setCanvasSize() {
-        canvas.width = window.innerWidth;
-        canvas.height = window.innerHeight;
+    const urlParams = new URLSearchParams(window.location.search);
+    const roomCode = urlParams.get("code") || "default";
+    document.getElementById("roomCodeDisplay").innerText = `Room: ${roomCode} | User: ${username}`;
+
+    socket.emit("joinRoom", roomCode);
+
+    window.addEventListener("resize", () => {
+      canvas.width = window.innerWidth;
+      canvas.height = window.innerHeight;
+    });
+
+    const getMousePos = (e) => ({ x: e.clientX, y: e.clientY });
+
+    canvas.addEventListener("mousedown", () => { drawing = true; });
+    canvas.addEventListener("mouseup", () => { drawing = false; });
+    canvas.addEventListener("mousemove", (e) => {
+      if (!drawing) return;
+      const pos = getMousePos(e);
+      ctx.fillStyle = "black";
+      ctx.beginPath();
+      ctx.arc(pos.x, pos.y, 3, 0, Math.PI * 2);
+      ctx.fill();
+      socket.emit("draw", { x: pos.x, y: pos.y, room: roomCode });
+    });
+
+    socket.on("draw", ({ x, y }) => {
+      ctx.fillStyle = "black";
+      ctx.beginPath();
+      ctx.arc(x, y, 3, 0, Math.PI * 2);
+      ctx.fill();
+    });
+
+    function sendMessage() {
+      const input = document.getElementById("chatText");
+      const message = `${username}: ${input.value}`;
+      if (input.value.trim() !== "") {
+        socket.emit("chatMessage", { room: roomCode, message });
+        input.value = "";
       }
-
-      window.addEventListener("resize", setCanvasSize);
-      setCanvasSize();
-
-      function getMousePos(e) {
-        return {
-          x: e.clientX,
-          y: e.clientY
-        };
-      }
-
-      canvas.addEventListener("mousedown", () => drawing = true);
-      canvas.addEventListener("mouseup", () => drawing = false);
-      canvas.addEventListener("mouseout", () => drawing = false);
-      canvas.addEventListener("mousemove", (e) => {
-        if (!drawing) return;
-        const pos = getMousePos(e);
-        ctx.beginPath();
-        ctx.arc(pos.x, pos.y, 4, 0, Math.PI * 2);
-        ctx.fillStyle = 'black';
-        ctx.fill();
-        socket.emit('draw', { x: pos.x, y: pos.y, room: roomCode });
-      });
-
-      socket.on('draw', (data) => {
-        ctx.beginPath();
-        ctx.arc(data.x, data.y, 4, 0, Math.PI * 2);
-        ctx.fillStyle = 'black';
-        ctx.fill();
-      });
-
-      const urlParams = new URLSearchParams(window.location.search);
-      const roomCode = urlParams.get("code") || "default";
-      const username = prompt("Enter your name:") || "Anonymous";
-
-      const roomDisplay = document.getElementById("roomCodeDisplay");
-      roomDisplay.innerText = `Room: ${roomCode} | User: ${username}`;
-
-      socket.emit("joinRoom", roomCode);
-
-      const chatMessages = document.getElementById("chatMessages");
-      const chatText = document.getElementById("chatText");
-
-      function sendMessage() {
-        const message = chatText.value.trim();
-        if (!message) return;
-        socket.emit("chatMessage", { room: roomCode, message: `${username}: ${message}` });
-        chatText.value = "";
-      }
-      window.sendMessage = sendMessage;
-
-      socket.on("chatMessage", (msg) => {
-        const p = document.createElement("p");
-        p.textContent = msg;
-        chatMessages.appendChild(p);
-        chatMessages.scrollTop = chatMessages.scrollHeight;
-      });
     }
+
+    socket.on("chatMessage", (message) => {
+      const box = document.getElementById("chatMessages");
+      const msg = document.createElement("div");
+      msg.textContent = message;
+      box.appendChild(msg);
+      box.scrollTop = box.scrollHeight;
+    });
   </script>
 </body>
 </html>
