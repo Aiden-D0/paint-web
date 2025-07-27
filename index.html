@@ -1,0 +1,32 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <title>Join Paint Room</title>
+  <link rel="stylesheet" href="style.css">
+</head>
+<body>
+  <div class="container">
+    <h1>PaintWeb🎨</h1>
+    <input id="room-code" placeholder="Enter Room Code" />
+    <div class="buttons">
+      <button onclick="joinRoom()">Join Room</button>
+      <button onclick="createRoom()">Create Room</button>
+    </div>
+  </div>
+
+  <script>
+    function createRoom() {
+      const code = Math.random().toString(36).substring(2, 8);
+      window.location.href = `room.html?code=${code}`;
+    }
+
+    function joinRoom() {
+      const code = document.getElementById("room-code").value.trim();
+      if (code) {
+        window.location.href = `room.html?code=${code}`;
+      }
+    }
+  </script>
+</body>
+</html>
