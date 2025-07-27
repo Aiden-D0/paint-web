@@ -1,140 +1,23 @@
 <!DOCTYPE html>
 <html lang="en">
 <head>
-  <meta charset="UTF-8" />
-  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
   <title>Paint Room</title>
-  <style>
-    * { margin: 0; padding: 0; box-sizing: border-box; }
-    body { overflow: hidden; font-family: sans-serif; }
-    #paintCanvas { position: absolute; top: 0; left: 0; z-index: 0; }
-
-    #roomCodeDisplay {
-      position: fixed;
-      top: 10px;
-      left: 10px;
-      z-index: 10;
-      background: rgba(255,255,255,0.8);
-      padding: 6px 12px;
-      border-radius: 6px;
-      font-weight: bold;
-    }
-
-    #chatBox {
-      position: fixed;
-      right: 10px;
-      bottom: 10px;
-      width: 300px;
-      z-index: 20;
-      background: white;
-      border: 1px solid #ccc;
-      border-radius: 8px;
-      display: flex;
-      flex-direction: column;
-      height: 250px;
-    }
-
-    #chatMessages {
-      flex: 1;
-      padding: 10px;
-      overflow-y: auto;
-      border-bottom: 1px solid #ccc;
-    }
-
-    #chatInput {
-      display: flex;
-    }
-
-    #chatText {
-      flex: 1;
-      padding: 8px;
-      border: none;
-      border-top-left-radius: 8px;
-      border-bottom-left-radius: 8px;
-    }
-
-    #chatInput button {
-      padding: 8px 12px;
-      border: none;
-      background: #007bff;
-      color: white;
-      border-top-right-radius: 8px;
-      border-bottom-right-radius: 8px;
-      cursor: pointer;
-    }
-  </style>
+  <link rel="stylesheet" href="style.css">
 </head>
 <body>
   <canvas id="paintCanvas"></canvas>
-  <div id="roomCodeDisplay">Loading...</div>
 
-  <div id="chatBox">
+  <div id="roomInfo"></div>
+
+  <div id="chatContainer">
     <div id="chatMessages"></div>
-    <div id="chatInput">
-      <input id="chatText" placeholder="Type a message...">
-      <button onclick="sendMessage()">Send</button>
-    </div>
+    <input id="chatText" type="text" placeholder="Type a message...">
   </div>
 
   <script src="/socket.io/socket.io.js"></script>
-  <script>
-    const socket = io();
-    const canvas = document.getElementById("paintCanvas");
-    const ctx = canvas.getContext("2d");
-    canvas.width = window.innerWidth;
-    canvas.height = window.innerHeight;
-
-    let drawing = false;
-    let username = prompt("Enter your name:") || "Guest";
-
-    const urlParams = new URLSearchParams(window.location.search);
-    const roomCode = urlParams.get("code") || "default";
-    document.getElementById("roomCodeDisplay").innerText = `Room: ${roomCode} | User: ${username}`;
-
-    socket.emit("joinRoom", roomCode);
-
-    window.addEventListener("resize", () => {
-      canvas.width = window.innerWidth;
-      canvas.height = window.innerHeight;
-    });
-
-    const getMousePos = (e) => ({ x: e.clientX, y: e.clientY });
-
-    canvas.addEventListener("mousedown", () => { drawing = true; });
-    canvas.addEventListener("mouseup", () => { drawing = false; });
-    canvas.addEventListener("mousemove", (e) => {
-      if (!drawing) return;
-      const pos = getMousePos(e);
-      ctx.fillStyle = "black";
-      ctx.beginPath();
-      ctx.arc(pos.x, pos.y, 3, 0, Math.PI * 2);
-      ctx.fill();
-      socket.emit("draw", { x: pos.x, y: pos.y, room: roomCode });
-    });
-
-    socket.on("draw", ({ x, y }) => {
-      ctx.fillStyle = "black";
-      ctx.beginPath();
-      ctx.arc(x, y, 3, 0, Math.PI * 2);
-      ctx.fill();
-    });
-
-    function sendMessage() {
-      const input = document.getElementById("chatText");
-      const message = `${username}: ${input.value}`;
-      if (input.value.trim() !== "") {
-        socket.emit("chatMessage", { room: roomCode, message });
-        input.value = "";
-      }
-    }
-
-    socket.on("chatMessage", (message) => {
-      const box = document.getElementById("chatMessages");
-      const msg = document.createElement("div");
-      msg.textContent = message;
-      box.appendChild(msg);
-      box.scrollTop = box.scrollHeight;
-    });
-  </script>
+  <script src="client.js"></script>
 </body>
 </html>
+
