@@ -118,6 +118,8 @@
 
     const urlParams = new URLSearchParams(window.location.search);
     const roomCode = urlParams.get("code") || "default";
+    const username = prompt("Enter your name:") || "Anonymous";
+
     document.getElementById("roomCodeDisplay").innerText = `Room: ${roomCode}`;
     socket.emit("joinRoom", roomCode);
 
@@ -127,7 +129,7 @@
     function sendMessage() {
       const message = chatText.value.trim();
       if (!message) return;
-      socket.emit("chatMessage", { room: roomCode, message });
+      socket.emit("chatMessage", { room: roomCode, message: `${username}: ${message}` });
       chatText.value = "";
     }
     window.sendMessage = sendMessage;
