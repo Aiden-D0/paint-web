@@ -12,12 +12,10 @@
       overflow: hidden;
     }
     canvas {
-      position: absolute;
-      top: 0;
-      left: 0;
+      display: block;
       width: 100vw;
       height: 100vh;
-      background: white;
+      background-color: white;
       cursor: crosshair;
     }
     #roomCodeDisplay {
@@ -29,6 +27,7 @@
       padding: 5px 10px;
       border-radius: 6px;
       box-shadow: 0 0 5px rgba(0,0,0,0.2);
+      z-index: 10;
     }
     #chatBox {
       position: fixed;
@@ -40,6 +39,7 @@
       padding: 10px;
       display: flex;
       flex-direction: column;
+      z-index: 10;
     }
     #chatMessages {
       flex: 1;
@@ -62,7 +62,7 @@
   </style>
 </head>
 <body>
-  <div id="roomCodeDisplay"></div>
+  <div id="roomCodeDisplay">Loading...</div>
   <canvas id="paintCanvas"></canvas>
 
   <div id="chatBox">
@@ -79,55 +79,57 @@
 
     const canvas = document.getElementById("paintCanvas");
     const ctx = canvas.getContext("2d");
+    let drawing = false;
 
-    function resizeCanvasToDisplaySize(canvas) {
-      const width = window.innerWidth;
-      const height = window.innerHeight;
-      canvas.width = width;
-      canvas.height = height;
+    function setCanvasSize() {
+      canvas.width = window.innerWidth;
+      canvas.height = window.innerHeight;
     }
 
-    resizeCanvasToDisplaySize(canvas);
-    window.addEventListener("resize", () => resizeCanvasToDisplaySize(canvas));
+    window.addEventListener("resize", setCanvasSize);
+    setCanvasSize();
 
-    let drawing = false;
+    function getMousePos(e) {
+      return {
+        x: e.clientX,
+        y: e.clientY
+      };
+    }
 
     canvas.addEventListener("mousedown", () => drawing = true);
     canvas.addEventListener("mouseup", () => drawing = false);
     canvas.addEventListener("mouseout", () => drawing = false);
-
     canvas.addEventListener("mousemove", (e) => {
       if (!drawing) return;
-      const rect = canvas.getBoundingClientRect();
-      const x = e.clientX - rect.left;
-      const y = e.clientY - rect.top;
-      ctx.fillStyle = "black";
+      const pos = getMousePos(e);
       ctx.beginPath();
-      ctx.arc(x, y, 5, 0, Math.PI * 2);
+      ctx.arc(pos.x, pos.y, 4, 0, Math.PI * 2);
+      ctx.fillStyle = 'black';
+      ctx.fill();
+      socket.emit('draw', { x: pos.x, y: pos.y, room: roomCode });
+    });
+
+    socket.on('draw', (data) => {
+      ctx.beginPath();
+      ctx.arc(data.x, data.y, 4, 0, Math.PI * 2);
+      ctx.fillStyle = 'black';
       ctx.fill();
     });
 
     const urlParams = new URLSearchParams(window.location.search);
-    const roomCode = urlParams.get("code");
-
-    if (roomCode) {
-      socket.emit("joinRoom", roomCode);
-      document.getElementById("roomCodeDisplay").innerText = `Room: ${roomCode}`;
-    } else {
-      alert("Room code not found in URL.");
-    }
+    const roomCode = urlParams.get("code") || "default";
+    document.getElementById("roomCodeDisplay").innerText = `Room: ${roomCode}`;
+    socket.emit("joinRoom", roomCode);
 
     const chatMessages = document.getElementById("chatMessages");
     const chatText = document.getElementById("chatText");
 
     function sendMessage() {
       const message = chatText.value.trim();
-      if (message && roomCode) {
-        socket.emit("chatMessage", { room: roomCode, message });
-        chatText.value = "";
-      }
+      if (!message) return;
+      socket.emit("chatMessage", { room: roomCode, message });
+      chatText.value = "";
     }
-
     window.sendMessage = sendMessage;
 
     socket.on("chatMessage", (msg) => {
